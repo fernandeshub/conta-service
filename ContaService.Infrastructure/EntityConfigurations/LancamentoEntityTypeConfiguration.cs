@@ -11,7 +11,7 @@ namespace ContaService.Infrastructure.EntityConfiguration
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Valor).IsRequired();
             builder.Property(x => x.Data).IsRequired();
-            builder.Property(x => x.Conta).IsRequired();
+            builder.OwnsOne(x => x.Conta);
             builder.Property(x => x.TipoOperacao).IsRequired();
 
             builder.ToTable("Lancamentos");

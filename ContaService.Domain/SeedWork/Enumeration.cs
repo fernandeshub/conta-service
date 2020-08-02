@@ -4,9 +4,9 @@ namespace ContaService.Domain.SeedWork
 {
     public enum TipoOperacao 
     {
-       [Description("Depósito")]
-       Deposito = 1,
-       [Description("Saque")]
-       Saque = 2,
+       [Description("Crédito")]
+       Credito = 1,
+       [Description("Débito")]
+       Debito = 2,
     }
 }
