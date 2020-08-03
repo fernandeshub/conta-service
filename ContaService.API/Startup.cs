@@ -1,4 +1,5 @@
-﻿using ContaService.Infrastructure;
+﻿using AutoMapper;
+using ContaService.Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ using ContaService.API.ViewModels;
 using ContaService.API.Validation;
 using ContaService.Domain.Interfaces;
 using ContaService.Service.Services;
-using ContaService.Infrastructure.Repositories;
+using ContaService.API.Mapping;
 
 namespace ContaService.API
 {
@@ -36,9 +37,11 @@ namespace ContaService.API
             .AddFluentValidation()
             .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
-             services.AddTransient<IValidator<Lancamento>, LancamentoValidator>();
+            services.AddAutoMapper(typeof(AutoMapperProfile));
 
-             services.AddScoped<ILancamentoRepository, LancamentoRepository>();
+            //AutomapperConfig(services);
+
+             services.AddTransient<IValidator<Lancamento>, LancamentoValidator>();
              services.AddScoped<ILancamentoService, LancamentoService>();
 
              services.AddSwaggerGen();
@@ -63,7 +66,7 @@ namespace ContaService.API
             // specifying the Swagger JSON endpoint.
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Conta Service API V1");
             });
 
             app.UseHttpsRedirection();

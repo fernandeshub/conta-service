@@ -8,7 +8,7 @@ namespace ContaService.Infrastructure.EntityConfiguration
     {
         public void Configure(EntityTypeBuilder<ContaCorrente> builder)
         {
-            builder.HasKey(x => x.Id);
+            builder.HasKey(x => x.ContaId).HasName("Id");
             builder.Property(x => x.Numero).IsRequired();
             builder.Property(x => x.Saldo).IsRequired();
            

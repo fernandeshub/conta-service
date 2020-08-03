@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using AutoMapper;
 using ContaService.API.ViewModels;
 using ContaService.Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -10,27 +11,29 @@ using Microsoft.AspNetCore.Mvc;
 namespace ContaService.API.Controllers
 {
     [ApiController]
-    public class LancamentoController : ControllerBase
+    public class ContaCorrenteController : ControllerBase
     {
+        private readonly IMapper _mapper;
         private readonly ILancamentoService _service;
 
-        public LancamentoController(ILancamentoService service)
+        public ContaCorrenteController(IMapper mapper, ILancamentoService service)
         {
+            _mapper = mapper;
             _service = service;
         }
 
         [HttpPost]
-        [Route("api/v1/lancamentos")]
+        [Route("api/v1/conta-corrente/{numero}/lancamentos")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public IActionResult Post([FromBody] Lancamento lancamento)
+        public async Task<IActionResult> Get(string numero)
         {
             try
             {
-                _service.Depositar(lancamento.ContaOrigem, 
-                    lancamento.ContaDestino, lancamento.Valor);
+               var lancamentos =  await _service.ListFiltered(numero);
+               var result = _mapper.Map<IEnumerable<LancamentoDetalhe>>(lancamentos);
 
-                return Ok();
+                return Ok(result);
             }
             catch (Exception ex)
             {
