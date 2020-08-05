@@ -6,13 +6,13 @@ namespace ContaService.Domain.Models
 {
     public class ContaCorrente
     {
-        public int ContaId { get; protected set; }
+        public int Id { get; private set; }
         public string Numero { get; private set; }
         public decimal Saldo { get; private set; }
 
-        public ContaCorrente(int contaId, string numero, decimal saldo)
+        public ContaCorrente(int id, string numero, decimal saldo)
         {
-            this.ContaId = contaId;
+            this.Id = id;
             this.Numero = numero;
             this.Saldo = saldo;
         }

@@ -9,7 +9,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Automapper" Version="10.0.0" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="FluentValidation.AspNetCore" Version="9.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
@@ -20,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ContaService.Infrastructure\ContaService.Infrastructure.csproj" />
-    <ProjectReference Include="..\ContaService.Service\ContaService.Service.csproj" />
+    <ProjectReference Include="..\ContaService.Application\ContaService.Application.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,46 +1,51 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using AutoMapper;
-using ContaService.API.ViewModels;
+using ContaService.API.Models;
 using ContaService.Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ContaService.API.Controllers
 {
     [ApiController]
     public class ContaCorrenteController : ControllerBase
     {
-        private readonly IMapper _mapper;
-        private readonly ILancamentoService _service;
+        private readonly ILogger<ContaCorrenteController> _logger;
+        private readonly IContaCorrenteService _service;
 
-        public ContaCorrenteController(IMapper mapper, ILancamentoService service)
+        public ContaCorrenteController(ILogger<ContaCorrenteController> logger,
+         IContaCorrenteService service)
         {
-            _mapper = mapper;
+            _logger = logger;
             _service = service;
         }
 
+    
         [HttpPost]
-        [Route("api/v1/conta-corrente/{numero}/lancamentos")]
+        [Authorize("Bearer")]
+        [Route("api/v1/conta-corrente/transferir")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType((int)HttpStatusCode.BadRequest)]
-        public async Task<IActionResult> Get(string numero)
+        public async Task<IActionResult> Transferir([FromBody] Transferencia transferencia)
         {
             try
             {
-               var lancamentos =  await _service.ListFiltered(numero);
-               var result = _mapper.Map<IEnumerable<LancamentoDetalhe>>(lancamentos);
+                await _service.Transferir(transferencia.ContaOrigem,
+                            transferencia.ContaDestino, transferencia.Valor);
 
-                return Ok(result);
+                return Ok();
             }
             catch (Exception ex)
             {
-               return BadRequest(ex.Message);
+                _logger.LogError(ex, ex.Message);
+
+                return BadRequest(ex.Message);
             }
         }
 
-        
+
     }
 }

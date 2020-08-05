@@ -5,28 +5,29 @@ namespace ContaService.Domain.Models
 {
     public class Lancamento
     {
-        public int Id { get; protected set; }
+        public int Id { get; private set; }
         public DateTime Data { get; private set; }
         public decimal Valor { get; private set; }
+        public decimal SaldoAtual { get; set; }
         public int ContaId { get; private set; }
-        public virtual ContaCorrente Conta { get; private set; }
         public TipoOperacao TipoOperacao { get; private set; }
 
-        public Lancamento(int id, decimal valor, DateTime data, int contaId, TipoOperacao tipoOperacao)
+        public Lancamento(int id, int contaId, decimal valor, decimal saldoAtual, DateTime data, TipoOperacao tipoOperacao)
         {
             this.Id = id;
             this.Valor = valor;
+            this.SaldoAtual = saldoAtual;
             this.Data = data;
             this.ContaId = contaId;
             this.TipoOperacao = tipoOperacao;
         }
 
-        public Lancamento(decimal valor, DateTime data, ContaCorrente conta, TipoOperacao tipoOperacao)
+        public Lancamento(int contaId, decimal valor, decimal saldoAtual, DateTime data,  TipoOperacao tipoOperacao)
         {
+            this.ContaId = contaId;
             this.Valor = valor;
+            this.SaldoAtual = saldoAtual;
             this.Data = data;
-            this.Conta = conta;
-            this.ContaId = conta.ContaId;
             this.TipoOperacao = tipoOperacao;
         }
     }

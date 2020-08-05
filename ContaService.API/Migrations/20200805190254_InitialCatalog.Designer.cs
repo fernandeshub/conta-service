@@ -3,14 +3,16 @@ using System;
 using ContaService.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace ContaService.API.Migrations
 {
     [DbContext(typeof(ContaServiceContext))]
-    partial class ContaServiceContextModelSnapshot : ModelSnapshot
+    [Migration("20200805190254_InitialCatalog")]
+    partial class InitialCatalog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

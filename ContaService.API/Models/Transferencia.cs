@@ -1,6 +1,6 @@
-namespace ContaService.API.ViewModels
+namespace ContaService.API.Models
 {
-    public class Lancamento
+    public class Transferencia
     {
         public string ContaOrigem { get; set; }
         public string ContaDestino { get; set; }
