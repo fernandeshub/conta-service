@@ -5,13 +5,12 @@ using System.Reflection;
 
 namespace ContaService.Domain.SeedWork
 {
-    public enum TipoOperacao
+    public enum TipoLancamento
     {
-        [Description("Crédito")]
-        Credito = 1,
-        [Description("Débito")]
-        Debito = 2,
+        [Description("Crédito")] Credito = 1,
+        [Description("Débito")] Debito = 2,
     }
+    
     public static class Enumeration
     {
         public static string GetDescription(this Enum value)

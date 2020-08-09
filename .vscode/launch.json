@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/ContaService.API/bin/Debug/netcoreapp2.1/ContaService.API.dll",
+            "program": "${workspaceFolder}/ContaService.API/bin/Debug/netcoreapp2.2/ContaService.API.dll",
             "args": [],
             "cwd": "${workspaceFolder}/ContaService.API",
             "stopAtEntry": false,

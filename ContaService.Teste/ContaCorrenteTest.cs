@@ -1,13 +1,11 @@
 using System;
 using Xunit;
-using ContaService.Application.Services;
-using ContaService.Domain.Interfaces;
-using ContaService.Infrastructure;
 
 namespace ContaService.Teste
 {
     public class ContaCorrenteTest
     {
+       // private readonly Mock<IContaCorrenteService> service;
           
         public ContaCorrenteTest()
         {

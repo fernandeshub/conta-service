@@ -1,4 +1,4 @@
-using ContaService.Domain.Models;
+using ContaService.Domain.AggregatesModel.ContaCorrenteAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -9,9 +9,11 @@ namespace ContaService.Infrastructure.EntityConfiguration
         public void Configure(EntityTypeBuilder<ContaCorrente> builder)
         {
             builder.HasKey(x => x.Id);
-            builder.Property(x => x.Numero).IsRequired();
-            builder.Property(x => x.Saldo).IsRequired();
-           
+            builder.Property<string>("Numero").IsRequired();
+            builder.Property(x => x.Saldo);
+
+            var navigation = builder.Metadata.FindNavigation(nameof(ContaCorrente.Lancamentos));
+            navigation.SetPropertyAccessMode(PropertyAccessMode.Field);
 
             builder.ToTable("ContaCorrente");
         }
