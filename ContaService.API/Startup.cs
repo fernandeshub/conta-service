@@ -14,13 +14,12 @@ using ContaService.API.Infrastructure.AutofacModules;
 using ContaService.API.Controllers;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
 using ContaService.API.Infrastructure.Auth;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Generic;
 using Microsoft.OpenApi.Interfaces;
 using Microsoft.OpenApi.Any;
+using ContaService.API.Infrastructure.Options;
 
 namespace ContaService.API
 {
@@ -68,18 +67,22 @@ namespace ContaService.API
                    .AllowCredentials());
            });
 
+           services.Configure<FireBaseOptions>(Configuration.GetSection(nameof(FireBaseOptions)));
+           var fireBaseOptions = Configuration.GetSection(nameof(FireBaseOptions)).Get<FireBaseOptions>();
+
            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = "https://securetoken.google.com/contaservice-e62f3";
+                options.Authority = fireBaseOptions.Authority;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = "https://securetoken.google.com/contaservice-e62f3", 
+                    ValidIssuer = fireBaseOptions.Authority, 
                     ValidateAudience = true,
-                    ValidAudience = "contaservice-e62f3",
+                    ValidAudience = fireBaseOptions.Audience,
                     ValidateLifetime = true
                 };
+
                 options.RequireHttpsMetadata = false;
             });
 
@@ -95,9 +98,9 @@ namespace ContaService.API
                         {
                             TokenUrl = new Uri("/api/v1/authorization",UriKind.Relative),
                             Extensions = new Dictionary<string, IOpenApiExtension>
-                                {
-                                    { "returnSecureToken", new OpenApiBoolean(true) },
-                                },
+                            {
+                                { "returnSecureToken", new OpenApiBoolean(true) },
+                            },
                         }
 
                     }
@@ -107,8 +110,8 @@ namespace ContaService.API
             });
 
             var container = new ContainerBuilder();
-            container.Populate(services);
 
+            container.Populate(services);
             container.RegisterModule(new MediatorModule());
             container.RegisterModule(new ApplicationModule(Configuration.GetConnectionString("DefaultConnection")));
 

@@ -6,8 +6,10 @@ using System.Security.Principal;
 using System.Threading.Tasks;
 using ContaService.API.Infrastructure.Auth;
 using ContaService.API.Infrastructure.Extensions;
+using ContaService.API.Infrastructure.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ContaService.API.Controllers
@@ -15,10 +17,16 @@ namespace ContaService.API.Controllers
     [Route("api/v1/authorization")]
     public class AuthorizationController : Controller
     {
+        private readonly FireBaseOptions _options;
+        public AuthorizationController(IOptions<FireBaseOptions> options)
+        {
+            _options = options.Value;
+        }
+
         [HttpPost]
         public async Task<ActionResult> GetToken([FromForm] LoginInfo loginInfo)
         {
-            string uri = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyCTcSSm6gjFL2R3dS7P1J5cc2jfyHTS-n0";
+            string uri = $"{_options.VerifyPasswordUri}{_options.ProjectKey}";
 
             using (HttpClient client = new HttpClient())
             {
