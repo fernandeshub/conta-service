@@ -5,17 +5,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using FluentValidation.AspNetCore;
-using FluentValidation;
-using ContaService.API.Validation;
-using ContaService.Domain.Interfaces;
-using ContaService.Application.Services;
-using ContaService.API.Models;
-using ContaService.API.Auth;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
+using System.Reflection;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using ContaService.API.Infrastructure.Filters;
+using ContaService.API.Infrastructure.AutofacModules;
+using ContaService.API.Controllers;
+using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using ContaService.API.Infrastructure.Auth;
+using Microsoft.IdentityModel.Tokens;
+using System.Collections.Generic;
+using Microsoft.OpenApi.Interfaces;
+using Microsoft.OpenApi.Any;
+using ContaService.API.Infrastructure.Options;
 
 namespace ContaService.API
 {
@@ -27,59 +31,93 @@ namespace ContaService.API
         }
 
         public IConfiguration Configuration { get; }
+        public ILifetimeScope AutofacContainer { get; private set; }
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<ContaServiceContext>(option =>
-                 option.UseSqlite(Configuration.GetConnectionString("DefaultConnection"),
-                  x => x.MigrationsAssembly("ContaService.API"))
-             );
+            services.AddOptions();
 
-            services.AddMvc()
-            .AddFluentValidation()
-            .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddEntityFrameworkSqlite()
+                .AddDbContext<ContaServiceContext>(options =>
+                {
+                    options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"),
+                    sqliteOptionsAction: sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                    });
+                }, ServiceLifetime.Scoped
+            );
 
-            services.AddTransient<UsuarioService>();
-            services.AddTransient<IValidator<Transferencia>, TransferenciaValidator>();
-            services.AddScoped<IContaCorrenteService, ContaCorrenteService>();
-
-            var signingConfigurations = new SigningConfigurations();
-            
-            services.AddSingleton(signingConfigurations);
-
-            var tokenConfigurations = new TokenConfigurations();
-            
-            new ConfigureFromConfigurationOptions<TokenConfigurations>(Configuration.GetSection("TokenConfigurations"))
-                    .Configure(tokenConfigurations);
-
-            services.AddSingleton(tokenConfigurations);
-
-            services.AddAuthentication(authOptions =>
+            services.AddMvc(options =>
             {
-                authOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                authOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.Filters.Add(typeof(HttpGlobalExceptionFilter));
+            })
+            .AddApplicationPart(typeof(ContaCorrenteController).Assembly)
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            }).AddJwtBearer(bearerOptions =>
+            services.AddCors(options =>
+           {
+               options.AddPolicy("CorsPolicy",
+                   builder => builder
+                   .SetIsOriginAllowed((host) => true)
+                   .AllowAnyMethod()
+                   .AllowAnyHeader()
+                   .AllowCredentials());
+           });
+
+           services.Configure<FireBaseOptions>(Configuration.GetSection(nameof(FireBaseOptions)));
+           var fireBaseOptions = Configuration.GetSection(nameof(FireBaseOptions)).Get<FireBaseOptions>();
+
+           services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                var paramsValidation = bearerOptions.TokenValidationParameters;
+                options.Authority = fireBaseOptions.Authority;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = fireBaseOptions.Authority, 
+                    ValidateAudience = true,
+                    ValidAudience = fireBaseOptions.Audience,
+                    ValidateLifetime = true
+                };
 
-                paramsValidation.IssuerSigningKey = signingConfigurations.Key;
-                paramsValidation.ValidAudience = tokenConfigurations.Audience;
-                paramsValidation.ValidIssuer = tokenConfigurations.Issuer;
-                paramsValidation.ValidateIssuerSigningKey = true;
-                paramsValidation.ValidateLifetime = true;
-                paramsValidation.ClockSkew = TimeSpan.Zero;
+                options.RequireHttpsMetadata = false;
             });
 
-            services.AddAuthorization(auth =>
+            services.AddSwaggerGen(c =>
             {
-                auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-                    .RequireAuthenticatedUser().Build());
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ContaService API", Version = "v1" });
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        Password = new OpenApiOAuthFlow
+                        {
+                            TokenUrl = new Uri("/api/v1/authorization",UriKind.Relative),
+                            Extensions = new Dictionary<string, IOpenApiExtension>
+                            {
+                                { "returnSecureToken", new OpenApiBoolean(true) },
+                            },
+                        }
+
+                    }
+                });
+
+                 c.OperationFilter<AuthorizeCheckOperationFilter>();
             });
 
-            services.AddSwaggerGen();
+            var container = new ContainerBuilder();
+
+            container.Populate(services);
+            container.RegisterModule(new MediatorModule());
+            container.RegisterModule(new ApplicationModule(Configuration.GetConnectionString("DefaultConnection")));
+
+            AutofacContainer = container.Build();
+ 
+            return new AutofacServiceProvider(AutofacContainer);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -94,6 +132,7 @@ namespace ContaService.API
                 app.UseHsts();
             }
 
+            app.UseAuthentication();
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();
 
@@ -102,6 +141,7 @@ namespace ContaService.API
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Conta Service API V1");
+                c.RoutePrefix = string.Empty;
             });
 
             app.UseHttpsRedirection();
